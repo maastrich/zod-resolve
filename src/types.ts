@@ -27,7 +27,9 @@ type UnwrapSchema<T extends core.$ZodType> =
     ? UnwrapSchema<Inner>
     : T extends core.$ZodNullable<infer Inner extends core.$ZodType>
       ? UnwrapSchema<Inner>
-      : T;
+      : T extends core.$ZodDefault<infer Inner extends core.$ZodType>
+        ? UnwrapSchema<Inner>
+        : T;
 
 type RemoveTrailingDot<Content extends string> =
   Content extends `${infer Prefix}.` ? RemoveTrailingDot<Prefix> : Content;

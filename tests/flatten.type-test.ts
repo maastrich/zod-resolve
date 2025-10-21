@@ -75,7 +75,7 @@ const arrayOfObjects = z.array(
   z.object({
     id: z.string(),
     name: z.string(),
-  })
+  }),
 );
 
 type ArrayOfObjects = FlattenSchema<typeof arrayOfObjects>;
@@ -109,9 +109,9 @@ const complexArrayNesting = z.object({
         z.object({
           type: z.string(),
           value: z.string(),
-        })
+        }),
       ),
-    })
+    }),
   ),
 });
 
@@ -357,6 +357,193 @@ type _test_optional_and_nullable = Expect<
 >;
 
 // ============================================================================
+// Default Schemas
+// ============================================================================
+
+const defaultFields = z.object({
+  name: z.string().default("John"),
+  age: z.number().default(0),
+});
+
+type DefaultFields = FlattenSchema<typeof defaultFields>;
+
+type _test_default_fields = Expect<Equal<keyof DefaultFields, "name" | "age">>;
+
+const defaultNestedObject = z.object({
+  user: z
+    .object({
+      name: z.string(),
+      email: z.string(),
+    })
+    .default({ name: "John", email: "john@example.com" }),
+});
+
+type DefaultNestedObject = FlattenSchema<typeof defaultNestedObject>;
+
+type _test_default_nested_object = Expect<
+  Equal<keyof DefaultNestedObject, "user" | "user.name" | "user.email">
+>;
+
+const defaultArray = z.object({
+  tags: z.array(z.string()).default([]),
+});
+
+type DefaultArray = FlattenSchema<typeof defaultArray>;
+
+type _test_default_array = Expect<Equal<keyof DefaultArray, "tags" | "tags[]">>;
+
+const defaultWithOptional = z.object({
+  data: z
+    .object({
+      value: z.string(),
+      count: z.number(),
+    })
+    .default({ value: "default", count: 0 })
+    .optional(),
+});
+
+type DefaultWithOptional = FlattenSchema<typeof defaultWithOptional>;
+
+type _test_default_with_optional = Expect<
+  Equal<keyof DefaultWithOptional, "data" | "data.value" | "data.count">
+>;
+
+const defaultWithNullable = z.object({
+  config: z
+    .object({
+      enabled: z.boolean(),
+      timeout: z.number(),
+    })
+    .default({ enabled: true, timeout: 5000 })
+    .nullable(),
+});
+
+type DefaultWithNullable = FlattenSchema<typeof defaultWithNullable>;
+
+type _test_default_with_nullable = Expect<
+  Equal<
+    keyof DefaultWithNullable,
+    "config" | "config.enabled" | "config.timeout"
+  >
+>;
+
+const defaultOptionalNullable = z.object({
+  settings: z
+    .object({
+      theme: z.string(),
+      fontSize: z.number(),
+    })
+    .default({ theme: "light", fontSize: 14 })
+    .optional()
+    .nullable(),
+});
+
+type DefaultOptionalNullable = FlattenSchema<typeof defaultOptionalNullable>;
+
+type _test_default_optional_nullable = Expect<
+  Equal<
+    keyof DefaultOptionalNullable,
+    "settings" | "settings.theme" | "settings.fontSize"
+  >
+>;
+
+const defaultArrayOfObjects = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string().default("Unnamed"),
+      }),
+    )
+    .default([]),
+});
+
+type DefaultArrayOfObjects = FlattenSchema<typeof defaultArrayOfObjects>;
+
+type _test_default_array_of_objects = Expect<
+  Equal<
+    keyof DefaultArrayOfObjects,
+    "items" | "items[]" | "items[].id" | "items[].name"
+  >
+>;
+
+const deeplyNestedDefaults = z.object({
+  config: z
+    .object({
+      database: z
+        .object({
+          host: z.string().default("localhost"),
+          port: z.number().default(5432),
+          credentials: z
+            .object({
+              username: z.string(),
+              password: z.string(),
+            })
+            .default({ username: "admin", password: "admin" }),
+        })
+        .default({
+          host: "localhost",
+          port: 5432,
+          credentials: { username: "admin", password: "admin" },
+        }),
+    })
+    .default({
+      database: {
+        host: "localhost",
+        port: 5432,
+        credentials: { username: "admin", password: "admin" },
+      },
+    }),
+});
+
+type DeeplyNestedDefaults = FlattenSchema<typeof deeplyNestedDefaults>;
+
+type _test_deeply_nested_defaults = Expect<
+  Equal<
+    keyof DeeplyNestedDefaults,
+    | "config"
+    | "config.database"
+    | "config.database.host"
+    | "config.database.port"
+    | "config.database.credentials"
+    | "config.database.credentials.username"
+    | "config.database.credentials.password"
+  >
+>;
+
+const mixedDefaultOptionalNullable = z.object({
+  profile: z
+    .object({
+      bio: z.string().default("No bio"),
+      avatar: z.string().nullable().default("default.png"),
+      social: z
+        .object({
+          twitter: z.string().optional(),
+          github: z.string(),
+        })
+        .default({ twitter: "", github: "" })
+        .nullable(),
+    })
+    .optional(),
+});
+
+type MixedDefaultOptionalNullable = FlattenSchema<
+  typeof mixedDefaultOptionalNullable
+>;
+
+type _test_mixed_default_optional_nullable = Expect<
+  Equal<
+    keyof MixedDefaultOptionalNullable,
+    | "profile"
+    | "profile.bio"
+    | "profile.avatar"
+    | "profile.social"
+    | "profile.social.twitter"
+    | "profile.social.github"
+  >
+>;
+
+// ============================================================================
 // Complex Nested Schemas
 // ============================================================================
 
@@ -450,7 +637,7 @@ const complexSchema = z.object({
     z.object({
       name: z.string(),
       tags: z.array(z.string()),
-    })
+    }),
   ),
   coordinates: z.tuple([z.number(), z.number()]),
   status: z.union([z.literal("active"), z.literal("inactive")]),
@@ -497,7 +684,7 @@ const deeplyOptionalStructure = z.object({
           z.object({
             type: z.string(),
             value: z.string(),
-          })
+          }),
         )
         .nullable(),
     })
@@ -593,7 +780,7 @@ const apiResponse = z.object({
           id: z.string(),
           name: z.string(),
         }),
-      })
+      }),
     ),
   }),
   metadata: z.object({

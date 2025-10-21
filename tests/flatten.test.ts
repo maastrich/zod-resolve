@@ -83,7 +83,7 @@ describe("flatten", () => {
         z.object({
           id: z.string(),
           name: z.string(),
-        })
+        }),
       );
 
       const result = flatten(schema);
@@ -125,7 +125,7 @@ describe("flatten", () => {
           z.object({
             name: z.string(),
             tags: z.array(z.string()),
-          })
+          }),
         ),
       });
 
@@ -355,6 +355,229 @@ describe("flatten", () => {
     });
   });
 
+  describe("default schemas", () => {
+    test("should not unwrap default trailing schemas", () => {
+      const schema = z.object({
+        name: z.string().default("John"),
+        age: z.number().default(0),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        name: schema.shape.name,
+        age: schema.shape.age,
+      });
+    });
+
+    test("should unwrap nested default objects", () => {
+      const schema = z.object({
+        user: z
+          .object({
+            name: z.string(),
+            email: z.string(),
+          })
+          .default({ name: "John", email: "john@example.com" }),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        user: schema.shape.user,
+        "user.name": schema.shape.user.unwrap().shape.name,
+        "user.email": schema.shape.user.unwrap().shape.email,
+      });
+    });
+
+    test("should unwrap default arrays", () => {
+      const schema = z.object({
+        tags: z.array(z.string()).default([]),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        tags: schema.shape.tags,
+        "tags[]": schema.shape.tags.unwrap().element,
+      });
+    });
+
+    test("should unwrap default combined with optional", () => {
+      const schema = z.object({
+        data: z
+          .object({
+            value: z.string(),
+            count: z.number(),
+          })
+          .default({ value: "default", count: 0 })
+          .optional(),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        data: schema.shape.data,
+        "data.value": schema.shape.data.unwrap().unwrap().shape.value,
+        "data.count": schema.shape.data.unwrap().unwrap().shape.count,
+      });
+    });
+
+    test("should unwrap default combined with nullable", () => {
+      const schema = z.object({
+        config: z
+          .object({
+            enabled: z.boolean(),
+            timeout: z.number(),
+          })
+          .default({ enabled: true, timeout: 5000 })
+          .nullable(),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        config: schema.shape.config,
+        "config.enabled": schema.shape.config.unwrap().unwrap().shape.enabled,
+        "config.timeout": schema.shape.config.unwrap().unwrap().shape.timeout,
+      });
+    });
+
+    test("should unwrap default, optional, and nullable", () => {
+      const schema = z.object({
+        settings: z
+          .object({
+            theme: z.string(),
+            fontSize: z.number(),
+          })
+          .default({ theme: "light", fontSize: 14 })
+          .optional()
+          .nullable(),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        settings: schema.shape.settings,
+        "settings.theme": schema.shape.settings.unwrap().unwrap().unwrap().shape
+          .theme,
+        "settings.fontSize": schema.shape.settings.unwrap().unwrap().unwrap()
+          .shape.fontSize,
+      });
+    });
+
+    test("should unwrap array of objects with default values", () => {
+      const schema = z.object({
+        items: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string().default("Unnamed"),
+            }),
+          )
+          .default([]),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        items: schema.shape.items,
+        "items[]": schema.shape.items.unwrap().element,
+        "items[].id": schema.shape.items.unwrap().element.shape.id,
+        "items[].name": schema.shape.items.unwrap().element.shape.name,
+      });
+    });
+
+    test("should unwrap deeply nested structures with default values", () => {
+      const schema = z.object({
+        config: z
+          .object({
+            database: z
+              .object({
+                host: z.string().default("localhost"),
+                port: z.number().default(5432),
+                credentials: z
+                  .object({
+                    username: z.string(),
+                    password: z.string(),
+                  })
+                  .default({ username: "admin", password: "admin" }),
+              })
+              .default({
+                host: "localhost",
+                port: 5432,
+                credentials: { username: "admin", password: "admin" },
+              }),
+          })
+          .default({
+            database: {
+              host: "localhost",
+              port: 5432,
+              credentials: { username: "admin", password: "admin" },
+            },
+          }),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        config: schema.shape.config,
+        "config.database": schema.shape.config.unwrap().shape.database,
+        "config.database.host": schema.shape.config
+          .unwrap()
+          .shape.database.unwrap().shape.host,
+        "config.database.port": schema.shape.config
+          .unwrap()
+          .shape.database.unwrap().shape.port,
+        "config.database.credentials": schema.shape.config
+          .unwrap()
+          .shape.database.unwrap().shape.credentials,
+        "config.database.credentials.username": schema.shape.config
+          .unwrap()
+          .shape.database.unwrap()
+          .shape.credentials.unwrap().shape.username,
+        "config.database.credentials.password": schema.shape.config
+          .unwrap()
+          .shape.database.unwrap()
+          .shape.credentials.unwrap().shape.password,
+      });
+    });
+
+    test("should unwrap mixed default, optional and nullable in complex nested structure", () => {
+      const schema = z.object({
+        profile: z
+          .object({
+            bio: z.string().default("No bio"),
+            avatar: z.string().nullable().default("default.png"),
+            social: z
+              .object({
+                twitter: z.string().optional(),
+                github: z.string(),
+              })
+              .default({ twitter: "", github: "" })
+              .nullable(),
+          })
+          .optional(),
+      });
+
+      const result = flatten(schema);
+
+      expect(result).toEqual({
+        profile: schema.shape.profile,
+        "profile.bio": schema.shape.profile.unwrap().shape.bio,
+        "profile.avatar": schema.shape.profile.unwrap().shape.avatar,
+        "profile.social": schema.shape.profile.unwrap().shape.social,
+        "profile.social.twitter": schema.shape.profile
+          .unwrap()
+          .shape.social.unwrap()
+          .unwrap().shape.twitter,
+        "profile.social.github": schema.shape.profile
+          .unwrap()
+          .shape.social.unwrap()
+          .unwrap().shape.github,
+      });
+    });
+  });
+
   describe("complex nested schemas", () => {
     test("should flatten complex schema with all types", () => {
       const schema = z.object({
@@ -367,7 +590,7 @@ describe("flatten", () => {
           z.object({
             name: z.string(),
             tags: z.array(z.string()),
-          })
+          }),
         ),
         coordinates: z.tuple([z.number(), z.number()]),
         status: z.union([z.literal("active"), z.literal("inactive")]),
@@ -409,7 +632,7 @@ describe("flatten", () => {
                 z.object({
                   type: z.string(),
                   value: z.string(),
-                })
+                }),
               )
               .nullable(),
           })
