@@ -24,6 +24,7 @@ pnpm changeset
 ```
 
 This interactive CLI will ask you:
+
 1. **Which packages to bump?** - Select `@maastrich/zod-resolve`
 2. **What type of change?** - Choose:
    - `major` - Breaking changes (1.0.0 → 2.0.0)
@@ -34,6 +35,7 @@ This interactive CLI will ask you:
 This creates a markdown file in `.changeset/` describing your changes.
 
 **Example:**
+
 ```bash
 pnpm changeset
 # Select: @maastrich/zod-resolve
@@ -68,6 +70,7 @@ pnpm version
 ```
 
 **Review the changes:**
+
 ```bash
 git status
 git diff
@@ -170,6 +173,7 @@ Add these secrets to your GitHub repository:
    - **Value:** Your npm automation token
 
 **To create an npm token:**
+
 ```bash
 npm login
 npm token create --type=automation
@@ -179,11 +183,13 @@ npm token create --type=automation
 ### Workflows
 
 **CI Workflow (`.github/workflows/ci.yml`)**
+
 - **Runs on:** Pull requests and pushes to `main`
 - **Checks:** Tests, format, lint, type-check, build
 - **Purpose:** Ensure code quality before merge
 
 **Release Workflow (`.github/workflows/release.yml`)**
+
 - **Runs on:** Git tags matching `v*.*.*` pattern
 - **Actions:**
   - Runs all quality checks
@@ -243,6 +249,7 @@ git push origin v1.2.0
 ### "Cannot publish over existing version"
 
 The version already exists on npm. You need to bump the version:
+
 ```bash
 pnpm version
 # Make sure package.json version is unique
@@ -251,6 +258,7 @@ pnpm version
 ### "Authentication required"
 
 You need to set up authentication:
+
 ```bash
 # Local publishing:
 npm login
@@ -262,6 +270,7 @@ npm login
 ### "Failed to publish"
 
 Check:
+
 1. Package name is not taken on npm
 2. You have publish rights to `@maastrich` scope
 3. `package.json` has `"access": "public"` (for scoped packages)
@@ -270,6 +279,7 @@ Check:
 ### Release workflow didn't trigger
 
 Ensure:
+
 1. Tag matches pattern `v*.*.*` (e.g., `v1.2.3`, not `1.2.3`)
 2. Tag was pushed: `git push origin --tags`
 3. GitHub Actions is enabled for the repository
@@ -278,6 +288,7 @@ Ensure:
 ### Workflow failed during publish
 
 Check:
+
 1. NPM_TOKEN secret is set correctly
 2. Token has publish permissions
 3. Package version doesn't already exist on npm
@@ -294,6 +305,7 @@ This project follows [Semantic Versioning](https://semver.org/):
 ## Package Access
 
 The package is published as:
+
 - **Scope**: `@maastrich/zod-resolve`
 - **Access**: Public
 - **Registry**: npm (https://www.npmjs.com/)
@@ -335,16 +347,19 @@ pnpm run                          # List available scripts
 ## Changesets vs Git Tags
 
 **Changesets** are used for:
+
 - 📝 Documenting what changed
 - 🔢 Determining version bumps (major/minor/patch)
 - 📋 Generating CHANGELOG
 
 **Git Tags** are used for:
+
 - 🚀 Triggering the release workflow
 - 🏷️ Marking specific commits as releases
 - 📦 Creating GitHub releases
 
 **Workflow:**
+
 1. Development → Create changesets
 2. Ready to release → Run `pnpm version` (consumes changesets)
 3. Create git tag → Triggers automated publishing
@@ -352,6 +367,7 @@ pnpm run                          # List available scripts
 ## Support
 
 For questions or issues:
+
 - Open an issue: https://github.com/maastrich/zod-resolve/issues
 - Check Changesets docs: https://github.com/changesets/changesets
 - Check GitHub Actions docs: https://docs.github.com/en/actions
