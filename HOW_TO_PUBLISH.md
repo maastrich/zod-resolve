@@ -13,7 +13,7 @@ Before publishing, ensure you have:
 
 ## Publishing Workflow
 
-This project uses [Changesets](https://github.com/changesets/changesets) for version management and publishing.
+This project uses [Changesets](https://github.com/changesets/changesets) for version management and changelog generation.
 
 ### Step 1: Create a Changeset
 
@@ -53,46 +53,81 @@ git commit -m "feat: add support for recursive schema resolution"
 git push
 ```
 
-### Step 3: Automated Release (Recommended)
+The CI workflow will run to ensure all checks pass.
 
-When changesets are merged to `main`, the GitHub Actions workflow will:
+### Step 3: Version and Release
 
-1. **Create a Release PR** - Automatically generates:
-   - Version bump in `package.json`
-   - Updated `CHANGELOG.md`
-   - Consumes all pending changesets
+When you're ready to publish, update the version and create a git tag:
 
-2. **Review and Merge** the Release PR
+```bash
+# 1. Run version command to consume changesets
+pnpm version
 
-3. **Automatic Publishing** - Once merged, the workflow:
-   - Runs all quality checks (format, lint, type-check)
-   - Builds the package
-   - Publishes to npm
-   - Creates a GitHub release with tags
+# This will:
+# - Update package.json version
+# - Generate/update CHANGELOG.md
+# - Delete consumed changeset files
+```
+
+**Review the changes:**
+
+```bash
+git status
+git diff
+```
+
+### Step 4: Commit and Tag
+
+```bash
+# 1. Commit the version changes
+git add .
+git commit -m "chore: release v1.2.3"
+
+# 2. Create and push the tag
+git tag v1.2.3
+git push origin main --tags
+```
+
+### Step 5: Automated Release
+
+Once the tag is pushed, GitHub Actions automatically:
+
+1. ✅ **Runs all quality checks**:
+   - Tests (Bun)
+   - Format check
+   - Type check
+   - Lint (Knip + Sherif + Oxlint)
+   - Build
+
+2. ✅ **Publishes to npm**:
+   - Runs `pnpm publish` with the built package
+   - Uses `NPM_TOKEN` for authentication
+
+3. ✅ **Creates GitHub Release**:
+   - Generates release notes from commits
+   - Links to CHANGELOG
+   - Adds installation instructions
 
 **This is the recommended approach** - it's automated, safe, and maintains a clear release history.
 
-### Step 4: Manual Publishing (Alternative)
+## Alternative: Manual Publishing
 
-If you need to publish manually:
+If you need to publish manually (not recommended):
 
 ```bash
-# 1. Update versions based on changesets
+# 1. Update versions
 pnpm version
 
-# 2. Review the changes
-git diff
+# 2. Build
+pnpm run build
 
-# 3. Commit version changes
-git add .
-git commit -m "chore: version packages"
-git push
+# 3. Publish (requires NPM_TOKEN)
+pnpm publish --access public
 
-# 4. Build and publish
-pnpm release
+# 4. Create tag and push
+git tag v1.2.3
+git push origin main --tags
 ```
-
-**Note:** Manual publishing requires `NPM_TOKEN` to be set locally.
 
 ## Release Types
 
@@ -149,49 +184,87 @@ npm token create --type=automation
 
 **CI Workflow (`.github/workflows/ci.yml`)**
 
-- Runs on: Pull requests and pushes to `main`
-- Checks: Format, lint, type-check, build
-- Matrix: Tests on Node 18, 20, 22
+- **Runs on:** Pull requests and pushes to `main`
+- **Checks:** Tests, format, lint, type-check, build
+- **Purpose:** Ensure code quality before merge
 
 **Release Workflow (`.github/workflows/release.yml`)**
 
-- Runs on: Pushes to `main`
-- Actions:
-  - Creates/updates release PR (if changesets exist)
-  - Publishes to npm (when release PR is merged)
-  - Creates GitHub release with tags
+- **Runs on:** Git tags matching `v*.*.*` pattern
+- **Actions:**
+  - Runs all quality checks
+  - Publishes to npm
+  - Creates GitHub release with auto-generated notes
 
 ## Pre-Release Checklist
 
-Before publishing, ensure:
+Before creating a release tag, ensure:
 
+- [ ] All changesets are created for merged features
 - [ ] All tests pass locally (`pnpm test`)
 - [ ] Code is formatted (`pnpm run format`)
 - [ ] No linting errors (`pnpm run lint`)
 - [ ] Type checking passes (`pnpm run type-check`)
 - [ ] Build succeeds (`pnpm run build`)
 - [ ] Documentation is updated
-- [ ] CHANGELOG is accurate
-- [ ] All changesets are merged
+- [ ] You've run `pnpm version` to update versions
+- [ ] CHANGELOG.md looks correct
+
+## Complete Release Example
+
+Here's a full example of releasing version 1.2.0:
+
+```bash
+# 1. You've already created changesets during development
+# 2. Ready to release
+
+# Update versions and generate CHANGELOG
+pnpm version
+
+# Review changes
+git status
+cat CHANGELOG.md
+
+# Commit version bump
+git add .
+git commit -m "chore: release v1.2.0"
+git push origin main
+
+# Create and push tag
+git tag v1.2.0
+git push origin v1.2.0
+
+# GitHub Actions will automatically:
+# - Run all checks
+# - Publish to npm
+# - Create GitHub release
+
+# Wait ~2-3 minutes, then verify:
+# - https://www.npmjs.com/package/@maastrich/zod-resolve
+# - https://github.com/maastrich/zod-resolve/releases
+```
 
 ## Troubleshooting
 
 ### "Cannot publish over existing version"
 
-The version already exists on npm. Ensure you've bumped the version:
+The version already exists on npm. You need to bump the version:
 
 ```bash
 pnpm version
+# Make sure package.json version is unique
 ```
 
 ### "Authentication required"
 
-You need to login to npm:
+You need to set up authentication:
 
 ```bash
+# Local publishing:
 npm login
-# Or set NPM_TOKEN environment variable
-export NPM_TOKEN=your_token_here
+
+# GitHub Actions:
+# Ensure NPM_TOKEN is set in repository secrets
 ```
 
 ### "Failed to publish"
@@ -200,17 +273,26 @@ Check:
 
 1. Package name is not taken on npm
 2. You have publish rights to `@maastrich` scope
-3. `package.json` has correct `"access": "public"`
+3. `package.json` has `"access": "public"` (for scoped packages)
 4. NPM_TOKEN is valid and has automation permissions
 
-### Release PR not created
+### Release workflow didn't trigger
 
 Ensure:
 
-1. Changesets exist in `.changeset/` directory
-2. You've pushed to `main` branch
-3. GitHub Actions has necessary permissions
-4. `GITHUB_TOKEN` secret is available
+1. Tag matches pattern `v*.*.*` (e.g., `v1.2.3`, not `1.2.3`)
+2. Tag was pushed: `git push origin --tags`
+3. GitHub Actions is enabled for the repository
+4. Workflow file exists at `.github/workflows/release.yml`
+
+### Workflow failed during publish
+
+Check:
+
+1. NPM_TOKEN secret is set correctly
+2. Token has publish permissions
+3. Package version doesn't already exist on npm
+4. All quality checks passed
 
 ## Version Strategy
 
@@ -232,30 +314,55 @@ The package is published as:
 
 After publishing:
 
-1. Verify package on npm: https://www.npmjs.com/package/@maastrich/zod-resolve
-2. Test installation: `pnpm add @maastrich/zod-resolve`
-3. Check GitHub release: https://github.com/maastrich/zod-resolve/releases
-4. Announce release (optional)
+1. ✅ Verify package on npm: https://www.npmjs.com/package/@maastrich/zod-resolve
+2. ✅ Test installation: `pnpm add @maastrich/zod-resolve`
+3. ✅ Check GitHub release: https://github.com/maastrich/zod-resolve/releases
+4. ✅ Verify CHANGELOG is updated
+5. 📢 Announce release (optional)
 
 ## Quick Reference
 
 ```bash
 # Development workflow
-pnpm changeset                    # Create a changeset
-git add .changeset/*.md          # Stage the changeset
+pnpm changeset                    # Create a changeset for changes
+git add .changeset/*.md           # Stage the changeset
 git commit -m "feat: description" # Commit changes
-git push                         # Push to trigger CI
+git push                          # Push to trigger CI
 
-# Manual release (if needed)
-pnpm version                     # Bump versions
-pnpm release                     # Build and publish
+# Release workflow
+pnpm version                      # Bump version, update CHANGELOG
+git add .                         # Stage version changes
+git commit -m "chore: release vX.Y.Z"
+git push origin main              # Push changes
+git tag vX.Y.Z                    # Create version tag
+git push origin vX.Y.Z            # Push tag → triggers release
 
 # Check what will be released
-pnpm changeset status            # View pending changes
+pnpm changeset status             # View pending changes
 
 # View all commands
-pnpm run                         # List available scripts
+pnpm run                          # List available scripts
 ```
+
+## Changesets vs Git Tags
+
+**Changesets** are used for:
+
+- 📝 Documenting what changed
+- 🔢 Determining version bumps (major/minor/patch)
+- 📋 Generating CHANGELOG
+
+**Git Tags** are used for:
+
+- 🚀 Triggering the release workflow
+- 🏷️ Marking specific commits as releases
+- 📦 Creating GitHub releases
+
+**Workflow:**
+
+1. Development → Create changesets
+2. Ready to release → Run `pnpm version` (consumes changesets)
+3. Create git tag → Triggers automated publishing
 
 ## Support
 
@@ -263,3 +370,4 @@ For questions or issues:
 
 - Open an issue: https://github.com/maastrich/zod-resolve/issues
 - Check Changesets docs: https://github.com/changesets/changesets
+- Check GitHub Actions docs: https://docs.github.com/en/actions
