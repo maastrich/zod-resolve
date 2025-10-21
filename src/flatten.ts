@@ -12,7 +12,7 @@ import {
 import { FlattenSchema } from "./types";
 
 function mergeSchemas(
-  schemas: Record<string, core.$ZodType>[],
+  schemas: Record<string, core.$ZodType>[]
 ): Record<string, core.$ZodType> {
   return schemas.reduce<Record<string, core.$ZodType>>((acc, schema) => {
     return Object.entries(schema).reduce<Record<string, core.$ZodType>>(
@@ -25,7 +25,7 @@ function mergeSchemas(
           : value;
         return acc;
       },
-      acc,
+      acc
     );
   }, {});
 }
@@ -43,7 +43,7 @@ function unwrapSchema(schema: core.$ZodType): core.$ZodType {
 
 function flattenUnionSchema(
   schema: core.$ZodType,
-  prefix: string,
+  prefix: string
 ): Record<string, core.$ZodType> {
   // Implementation goes here
   if (!(schema instanceof ZodUnion)) {
@@ -51,13 +51,13 @@ function flattenUnionSchema(
   }
 
   return mergeSchemas(
-    schema.options.map((option) => flattenSchema(option, prefix)),
+    schema.options.map((option) => flattenSchema(option, prefix))
   );
 }
 
 function flattenObjectSchema(
   schema: core.$ZodType,
-  prefix: string,
+  prefix: string
 ): Record<string, core.$ZodType> {
   // Implementation goes here
   if (!(schema instanceof ZodObject)) {
@@ -73,13 +73,13 @@ function flattenObjectSchema(
         },
         flattenSchema(value, newKey),
       ]);
-    }),
+    })
   );
 }
 
 function flattenArraySchema(
   schema: core.$ZodType,
-  prefix: string,
+  prefix: string
 ): Record<string, core.$ZodType> {
   // Implementation goes here
   if (!(schema instanceof ZodArray)) {
@@ -95,7 +95,7 @@ function flattenArraySchema(
 
 function flattenTupleSchema(
   schema: core.$ZodType,
-  prefix: string,
+  prefix: string
 ): Record<string, core.$ZodType> {
   if (!(schema instanceof ZodTuple)) {
     return {};
@@ -108,13 +108,13 @@ function flattenTupleSchema(
         { [newPrefix]: element },
         flattenSchema(element, newPrefix),
       ]);
-    }),
+    })
   );
 }
 
 function flattenSchema(
   schema: core.$ZodType,
-  prefix: string,
+  prefix: string
 ): Record<string, core.$ZodType> {
   // Implementation goes here
   const unwraped = unwrapSchema(schema);
@@ -128,7 +128,7 @@ function flattenSchema(
 }
 
 export function flatten<T extends core.$ZodType>(
-  schema: T,
+  schema: T
 ): FlattenSchema<T, ""> {
   return flattenSchema(schema, "") as FlattenSchema<T, "">;
 }

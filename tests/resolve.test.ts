@@ -55,10 +55,10 @@ describe("resolve", () => {
       const countryNameSchema = resolve(schema, "company.address.country.name");
 
       expect(streetSchema).toBe(
-        schema.shape.company.shape.address.shape.street,
+        schema.shape.company.shape.address.shape.street
       );
       expect(countryNameSchema).toBe(
-        schema.shape.company.shape.address.shape.country.shape.name,
+        schema.shape.company.shape.address.shape.country.shape.name
       );
     });
   });
@@ -78,7 +78,7 @@ describe("resolve", () => {
         z.object({
           id: z.string(),
           name: z.string(),
-        }),
+        })
       );
 
       const elementSchema = resolve(schema, "[]");
@@ -125,9 +125,9 @@ describe("resolve", () => {
               z.object({
                 type: z.string(),
                 value: z.string(),
-              }),
+              })
             ),
-          }),
+          })
         ),
       });
 
@@ -141,10 +141,10 @@ describe("resolve", () => {
       expect(userNameSchema).toBe(schema.shape.users.element.shape.name);
       expect(contactsSchema).toBe(schema.shape.users.element.shape.contacts);
       expect(contactElementSchema).toBe(
-        schema.shape.users.element.shape.contacts.element,
+        schema.shape.users.element.shape.contacts.element
       );
       expect(contactTypeSchema).toBe(
-        schema.shape.users.element.shape.contacts.element.shape.type,
+        schema.shape.users.element.shape.contacts.element.shape.type
       );
     });
   });
@@ -536,7 +536,7 @@ describe("resolve", () => {
             z.object({
               id: z.string(),
               name: z.string().default("Unnamed"),
-            }),
+            })
           )
           .default([]),
       });
@@ -590,11 +590,11 @@ describe("resolve", () => {
       const credentialsSchema = resolve(schema, "config.database.credentials");
       const usernameSchema = resolve(
         schema,
-        "config.database.credentials.username",
+        "config.database.credentials.username"
       );
       const passwordSchema = resolve(
         schema,
-        "config.database.credentials.password",
+        "config.database.credentials.password"
       );
 
       expect(configSchema.def.type).toBe("default");
@@ -619,7 +619,7 @@ describe("resolve", () => {
           z.object({
             name: z.string(),
             tags: z.array(z.string()),
-          }),
+          })
         ),
         coordinates: z.tuple([z.number(), z.number()]),
         status: z.union([z.literal("active"), z.literal("inactive")]),
@@ -634,30 +634,30 @@ describe("resolve", () => {
 
       // Nested object
       expect(resolve(schema, "metadata.created")).toBe(
-        schema.shape.metadata.shape.created,
+        schema.shape.metadata.shape.created
       );
       expect(resolve(schema, "metadata.updated")).toBe(
-        schema.shape.metadata.shape.updated,
+        schema.shape.metadata.shape.updated
       );
 
       // Array paths
       expect(resolve(schema, "items[]")).toBe(schema.shape.items.element);
       expect(resolve(schema, "items[].name")).toBe(
-        schema.shape.items.element.shape.name,
+        schema.shape.items.element.shape.name
       );
       expect(resolve(schema, "items[].tags")).toBe(
-        schema.shape.items.element.shape.tags,
+        schema.shape.items.element.shape.tags
       );
       expect(resolve(schema, "items[].tags[]")).toBe(
-        schema.shape.items.element.shape.tags.element,
+        schema.shape.items.element.shape.tags.element
       );
 
       // Tuple paths
       expect(resolve(schema, "coordinates[0]")).toBe(
-        schema.shape.coordinates.def.items[0],
+        schema.shape.coordinates.def.items[0]
       );
       expect(resolve(schema, "coordinates[1]")).toBe(
-        schema.shape.coordinates.def.items[1],
+        schema.shape.coordinates.def.items[1]
       );
     });
 
@@ -682,7 +682,7 @@ describe("resolve", () => {
                 z.object({
                   type: z.string(),
                   value: z.string(),
-                }),
+                })
               )
               .nullable(),
           })
@@ -695,7 +695,7 @@ describe("resolve", () => {
       expect(resolve(schema, "user.profile.avatar").def.type).toBe("optional");
       expect(resolve(schema, "user.profile.social").def.type).toBe("nullable");
       expect(resolve(schema, "user.profile.social.twitter").def.type).toBe(
-        "string",
+        "string"
       );
       expect(resolve(schema, "user.contacts").def.type).toBe("nullable");
       expect(resolve(schema, "user.contacts[]").def.type).toBe("object");
@@ -734,11 +734,11 @@ describe("resolve", () => {
       // contacts and permissions are each unique to one branch, so they merge as unions
       expect(
         contactsSchema instanceof ZodUnion ||
-          contactsSchema.def.type === "array",
+          contactsSchema.def.type === "array"
       ).toBe(true);
       expect(
         permissionsSchema instanceof ZodUnion ||
-          permissionsSchema.def.type === "array",
+          permissionsSchema.def.type === "array"
       ).toBe(true);
       expect(contactsElementSchema.def.type).toBe("string");
       expect(permissionsElementSchema.def.type).toBe("string");

@@ -75,7 +75,7 @@ const arrayOfObjects = z.array(
   z.object({
     id: z.string(),
     name: z.string(),
-  }),
+  })
 );
 
 type ArrayOfObjects = FlattenSchema<typeof arrayOfObjects>;
@@ -109,9 +109,9 @@ const complexArrayNesting = z.object({
         z.object({
           type: z.string(),
           value: z.string(),
-        }),
+        })
       ),
-    }),
+    })
   ),
 });
 
@@ -453,7 +453,7 @@ const defaultArrayOfObjects = z.object({
       z.object({
         id: z.string(),
         name: z.string().default("Unnamed"),
-      }),
+      })
     )
     .default([]),
 });
@@ -637,7 +637,7 @@ const complexSchema = z.object({
     z.object({
       name: z.string(),
       tags: z.array(z.string()),
-    }),
+    })
   ),
   coordinates: z.tuple([z.number(), z.number()]),
   status: z.union([z.literal("active"), z.literal("inactive")]),
@@ -684,7 +684,7 @@ const deeplyOptionalStructure = z.object({
           z.object({
             type: z.string(),
             value: z.string(),
-          }),
+          })
         )
         .nullable(),
     })
@@ -780,7 +780,7 @@ const apiResponse = z.object({
           id: z.string(),
           name: z.string(),
         }),
-      }),
+      })
     ),
   }),
   metadata: z.object({
