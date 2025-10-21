@@ -1,5 +1,11 @@
 # @maastrich/zod-resolve
 
+## 0.2.1
+
+### Patch Changes
+
+- Add support for .default() schema
+
 ## 0.2.0
 
 ### Minor Changes
