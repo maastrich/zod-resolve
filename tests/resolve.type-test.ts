@@ -459,6 +459,290 @@ type _test_resolve_nullable_array_element = Expect<
 >;
 
 // ============================================================================
+// Default Type Resolution
+// ============================================================================
+
+const defaultFields = z.object({
+  name: z.string().default("John"),
+  age: z.number().default(0),
+});
+
+type _test_resolve_default_name = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultFields, "name">>,
+    typeof defaultFields.shape.name
+  >
+>;
+
+// The resolved type should have type "default"
+type _test_resolve_default_def = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultFields, "name">>["def"]["type"],
+    "default"
+  >
+>;
+
+const defaultNestedObject = z.object({
+  user: z
+    .object({
+      name: z.string(),
+      email: z.string(),
+    })
+    .default({ name: "John", email: "john@example.com" }),
+});
+
+type _test_resolve_default_nested_user = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultNestedObject, "user">>,
+    typeof defaultNestedObject.shape.user
+  >
+>;
+
+type _test_resolve_default_nested_name = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultNestedObject, "user.name">>,
+    z.ZodString
+  >
+>;
+
+type _test_resolve_default_nested_email = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultNestedObject, "user.email">>,
+    z.ZodString
+  >
+>;
+
+const defaultArray = z.object({
+  tags: z.array(z.string()).default([]),
+});
+
+type _test_resolve_default_array = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultArray, "tags">>,
+    typeof defaultArray.shape.tags
+  >
+>;
+
+type _test_resolve_default_array_element = Expect<
+  Equal<ReturnType<typeof resolve<typeof defaultArray, "tags[]">>, z.ZodString>
+>;
+
+const defaultWithOptional = z.object({
+  data: z
+    .object({
+      value: z.string(),
+      count: z.number(),
+    })
+    .default({ value: "default", count: 0 })
+    .optional(),
+});
+
+type _test_resolve_default_optional_data = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultWithOptional, "data">>,
+    typeof defaultWithOptional.shape.data
+  >
+>;
+
+type _test_resolve_default_optional_value = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultWithOptional, "data.value">>,
+    z.ZodString
+  >
+>;
+
+const defaultWithNullable = z.object({
+  config: z
+    .object({
+      enabled: z.boolean(),
+      timeout: z.number(),
+    })
+    .default({ enabled: true, timeout: 5000 })
+    .nullable(),
+});
+
+type _test_resolve_default_nullable_config = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultWithNullable, "config">>,
+    typeof defaultWithNullable.shape.config
+  >
+>;
+
+type _test_resolve_default_nullable_enabled = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultWithNullable, "config.enabled">>,
+    z.ZodBoolean
+  >
+>;
+
+const defaultOptionalNullable = z.object({
+  settings: z
+    .object({
+      theme: z.string(),
+      fontSize: z.number(),
+    })
+    .default({ theme: "light", fontSize: 14 })
+    .optional()
+    .nullable(),
+});
+
+type _test_resolve_default_optional_nullable_settings = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultOptionalNullable, "settings">>,
+    typeof defaultOptionalNullable.shape.settings
+  >
+>;
+
+type _test_resolve_default_optional_nullable_theme = Expect<
+  Equal<
+    ReturnType<
+      typeof resolve<typeof defaultOptionalNullable, "settings.theme">
+    >,
+    z.ZodString
+  >
+>;
+
+type _test_resolve_default_optional_nullable_fontSize = Expect<
+  Equal<
+    ReturnType<
+      typeof resolve<typeof defaultOptionalNullable, "settings.fontSize">
+    >,
+    z.ZodNumber
+  >
+>;
+
+const defaultArrayOfObjects = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string().default("Unnamed"),
+      })
+    )
+    .default([]),
+});
+
+type _test_resolve_default_array_of_objects = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultArrayOfObjects, "items">>,
+    typeof defaultArrayOfObjects.shape.items
+  >
+>;
+
+type _test_resolve_default_array_of_objects_element = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultArrayOfObjects, "items[]">>,
+    z.ZodObject<{
+      id: z.ZodString;
+      name: z.ZodDefault<z.ZodString>;
+    }>
+  >
+>;
+
+type _test_resolve_default_array_of_objects_id = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultArrayOfObjects, "items[].id">>,
+    z.ZodString
+  >
+>;
+
+type _test_resolve_default_array_of_objects_name = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof defaultArrayOfObjects, "items[].name">>,
+    z.ZodDefault<z.ZodString>
+  >
+>;
+
+const deeplyNestedDefaults = z.object({
+  config: z
+    .object({
+      database: z
+        .object({
+          host: z.string().default("localhost"),
+          port: z.number().default(5432),
+          credentials: z
+            .object({
+              username: z.string(),
+              password: z.string(),
+            })
+            .default({ username: "admin", password: "admin" }),
+        })
+        .default({
+          host: "localhost",
+          port: 5432,
+          credentials: { username: "admin", password: "admin" },
+        }),
+    })
+    .default({
+      database: {
+        host: "localhost",
+        port: 5432,
+        credentials: { username: "admin", password: "admin" },
+      },
+    }),
+});
+
+type _test_resolve_deeply_nested_defaults_config = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof deeplyNestedDefaults, "config">>,
+    typeof deeplyNestedDefaults.shape.config
+  >
+>;
+
+type _test_resolve_deeply_nested_defaults_database = Expect<
+  Equal<
+    ReturnType<typeof resolve<typeof deeplyNestedDefaults, "config.database">>,
+    z.ZodDefault<
+      z.ZodObject<{
+        host: z.ZodDefault<z.ZodString>;
+        port: z.ZodDefault<z.ZodNumber>;
+        credentials: z.ZodDefault<
+          z.ZodObject<{
+            username: z.ZodString;
+            password: z.ZodString;
+          }>
+        >;
+      }>
+    >
+  >
+>;
+
+type _test_resolve_deeply_nested_defaults_host = Expect<
+  Equal<
+    ReturnType<
+      typeof resolve<typeof deeplyNestedDefaults, "config.database.host">
+    >,
+    z.ZodDefault<z.ZodString>
+  >
+>;
+
+type _test_resolve_deeply_nested_defaults_credentials = Expect<
+  Equal<
+    ReturnType<
+      typeof resolve<typeof deeplyNestedDefaults, "config.database.credentials">
+    >,
+    z.ZodDefault<
+      z.ZodObject<{
+        username: z.ZodString;
+        password: z.ZodString;
+      }>
+    >
+  >
+>;
+
+type _test_resolve_deeply_nested_defaults_username = Expect<
+  Equal<
+    ReturnType<
+      typeof resolve<
+        typeof deeplyNestedDefaults,
+        "config.database.credentials.username"
+      >
+    >,
+    z.ZodString
+  >
+>;
+
+// ============================================================================
 // Complex Nested Type Resolution
 // ============================================================================
 

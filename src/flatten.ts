@@ -2,6 +2,7 @@ import {
   core,
   z,
   ZodArray,
+  ZodDefault,
   ZodNullable,
   ZodObject,
   ZodOptional,
@@ -30,10 +31,11 @@ function mergeSchemas(
 }
 
 function unwrapSchema(schema: core.$ZodType): core.$ZodType {
-  if (schema instanceof ZodOptional) {
-    return unwrapSchema(schema.unwrap());
-  }
-  if (schema instanceof ZodNullable) {
+  if (
+    schema instanceof ZodOptional ||
+    schema instanceof ZodDefault ||
+    schema instanceof ZodNullable
+  ) {
     return unwrapSchema(schema.unwrap());
   }
   return schema;

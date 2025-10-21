@@ -416,6 +416,197 @@ describe("resolve", () => {
     });
   });
 
+  describe("default schemas", () => {
+    test("should resolve through default wrapper", () => {
+      const schema = z.object({
+        name: z.string().default("John"),
+        age: z.number().default(0),
+      });
+
+      const nameSchema = resolve(schema, "name");
+      const ageSchema = resolve(schema, "age");
+
+      expect(nameSchema).toBe(schema.shape.name);
+      expect(ageSchema).toBe(schema.shape.age);
+      expect(nameSchema.def.type).toBe("default");
+      expect(ageSchema.def.type).toBe("default");
+    });
+
+    test("should resolve nested default objects", () => {
+      const schema = z.object({
+        user: z
+          .object({
+            name: z.string(),
+            email: z.string(),
+          })
+          .default({ name: "John", email: "john@example.com" }),
+      });
+
+      const userSchema = resolve(schema, "user");
+      const nameSchema = resolve(schema, "user.name");
+      const emailSchema = resolve(schema, "user.email");
+
+      expect(userSchema).toBe(schema.shape.user);
+      expect(userSchema.def.type).toBe("default");
+      expect(nameSchema.def.type).toBe("string");
+      expect(emailSchema.def.type).toBe("string");
+    });
+
+    test("should resolve default arrays", () => {
+      const schema = z.object({
+        tags: z.array(z.string()).default([]),
+      });
+
+      const tagsSchema = resolve(schema, "tags");
+      const elementSchema = resolve(schema, "tags[]");
+
+      expect(tagsSchema).toBe(schema.shape.tags);
+      expect(tagsSchema.def.type).toBe("default");
+      expect(elementSchema.def.type).toBe("string");
+    });
+
+    test("should resolve through default combined with optional", () => {
+      const schema = z.object({
+        data: z
+          .object({
+            value: z.string(),
+            count: z.number(),
+          })
+          .default({ value: "default", count: 0 })
+          .optional(),
+      });
+
+      const dataSchema = resolve(schema, "data");
+      const valueSchema = resolve(schema, "data.value");
+      const countSchema = resolve(schema, "data.count");
+
+      expect(dataSchema).toBe(schema.shape.data);
+      expect(dataSchema.def.type).toBe("optional");
+      expect(valueSchema.def.type).toBe("string");
+      expect(countSchema.def.type).toBe("number");
+    });
+
+    test("should resolve through default combined with nullable", () => {
+      const schema = z.object({
+        config: z
+          .object({
+            enabled: z.boolean(),
+            timeout: z.number(),
+          })
+          .default({ enabled: true, timeout: 5000 })
+          .nullable(),
+      });
+
+      const configSchema = resolve(schema, "config");
+      const enabledSchema = resolve(schema, "config.enabled");
+      const timeoutSchema = resolve(schema, "config.timeout");
+
+      expect(configSchema).toBe(schema.shape.config);
+      expect(configSchema.def.type).toBe("nullable");
+      expect(enabledSchema.def.type).toBe("boolean");
+      expect(timeoutSchema.def.type).toBe("number");
+    });
+
+    test("should resolve through default, optional, and nullable", () => {
+      const schema = z.object({
+        settings: z
+          .object({
+            theme: z.string(),
+            fontSize: z.number(),
+          })
+          .default({ theme: "light", fontSize: 14 })
+          .optional()
+          .nullable(),
+      });
+
+      const settingsSchema = resolve(schema, "settings");
+      const themeSchema = resolve(schema, "settings.theme");
+      const fontSizeSchema = resolve(schema, "settings.fontSize");
+
+      expect(settingsSchema).toBe(schema.shape.settings);
+      expect(settingsSchema.def.type).toBe("nullable");
+      expect(themeSchema.def.type).toBe("string");
+      expect(fontSizeSchema.def.type).toBe("number");
+    });
+
+    test("should resolve array of objects with default values", () => {
+      const schema = z.object({
+        items: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string().default("Unnamed"),
+            })
+          )
+          .default([]),
+      });
+
+      const itemsSchema = resolve(schema, "items");
+      const itemSchema = resolve(schema, "items[]");
+      const idSchema = resolve(schema, "items[].id");
+      const nameSchema = resolve(schema, "items[].name");
+
+      expect(itemsSchema).toBe(schema.shape.items);
+      expect(itemsSchema.def.type).toBe("default");
+      expect(itemSchema.def.type).toBe("object");
+      expect(idSchema.def.type).toBe("string");
+      expect(nameSchema.def.type).toBe("default");
+    });
+
+    test("should resolve deeply nested structures with default values", () => {
+      const schema = z.object({
+        config: z
+          .object({
+            database: z
+              .object({
+                host: z.string().default("localhost"),
+                port: z.number().default(5432),
+                credentials: z
+                  .object({
+                    username: z.string(),
+                    password: z.string(),
+                  })
+                  .default({ username: "admin", password: "admin" }),
+              })
+              .default({
+                host: "localhost",
+                port: 5432,
+                credentials: { username: "admin", password: "admin" },
+              }),
+          })
+          .default({
+            database: {
+              host: "localhost",
+              port: 5432,
+              credentials: { username: "admin", password: "admin" },
+            },
+          }),
+      });
+
+      const configSchema = resolve(schema, "config");
+      const databaseSchema = resolve(schema, "config.database");
+      const hostSchema = resolve(schema, "config.database.host");
+      const portSchema = resolve(schema, "config.database.port");
+      const credentialsSchema = resolve(schema, "config.database.credentials");
+      const usernameSchema = resolve(
+        schema,
+        "config.database.credentials.username"
+      );
+      const passwordSchema = resolve(
+        schema,
+        "config.database.credentials.password"
+      );
+
+      expect(configSchema.def.type).toBe("default");
+      expect(databaseSchema.def.type).toBe("default");
+      expect(hostSchema.def.type).toBe("default");
+      expect(portSchema.def.type).toBe("default");
+      expect(credentialsSchema.def.type).toBe("default");
+      expect(usernameSchema.def.type).toBe("string");
+      expect(passwordSchema.def.type).toBe("string");
+    });
+  });
+
   describe("complex nested schemas", () => {
     test("should resolve all paths in complex schema", () => {
       const schema = z.object({
