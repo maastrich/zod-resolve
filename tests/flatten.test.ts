@@ -83,7 +83,7 @@ describe("flatten", () => {
         z.object({
           id: z.string(),
           name: z.string(),
-        }),
+        })
       );
 
       const result = flatten(schema);
@@ -125,7 +125,7 @@ describe("flatten", () => {
           z.object({
             name: z.string(),
             tags: z.array(z.string()),
-          }),
+          })
         ),
       });
 
@@ -472,7 +472,7 @@ describe("flatten", () => {
             z.object({
               id: z.string(),
               name: z.string().default("Unnamed"),
-            }),
+            })
           )
           .default([]),
       });
@@ -590,7 +590,7 @@ describe("flatten", () => {
           z.object({
             name: z.string(),
             tags: z.array(z.string()),
-          }),
+          })
         ),
         coordinates: z.tuple([z.number(), z.number()]),
         status: z.union([z.literal("active"), z.literal("inactive")]),
@@ -632,7 +632,7 @@ describe("flatten", () => {
                 z.object({
                   type: z.string(),
                   value: z.string(),
-                }),
+                })
               )
               .nullable(),
           })
