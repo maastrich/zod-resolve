@@ -32,9 +32,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
           cache: pnpm
+          node-version: 20
           registry-url: "https://registry.npmjs.org"
+
+      - name: Install latest npm
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -56,8 +59,6 @@ jobs:
 
       - name: Publish to npm
         run: pnpm publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -66,9 +67,9 @@ jobs:
           body: |
             ## Installation
 
-            \`\`\`bash
+            ```bash
             npm install @maastrich/zod-resolve@${{ github.ref_name }}
-            \`\`\`
+            ```
 
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for full details.
         env:
