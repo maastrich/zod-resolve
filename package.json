@@ -1,6 +1,6 @@
 {
   "name": "@maastrich/zod-resolve",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": false,
   "description": "Type-safe Zod schema resolver with path notation support for nested objects, arrays, tuples, and unions",
   "main": "./dist/index.js",

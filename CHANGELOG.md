@@ -1,5 +1,12 @@
 # @maastrich/zod-resolve
 
+## 0.2.2
+
+### Patch Changes
+
+- 3c2dfdc: bump dependencies
+- 48c505e: change release authentication config
+
 ## 0.2.1
 
 ### Patch Changes
